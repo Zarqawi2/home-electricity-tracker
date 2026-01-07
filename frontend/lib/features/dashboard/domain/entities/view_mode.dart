@@ -1,0 +1,1 @@
+enum DashboardViewMode { daily, monthly }
