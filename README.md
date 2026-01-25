@@ -16,19 +16,42 @@ Flutter + Laravel app for tracking household electricity usage, estimating costs
 - RTL-first UI with Kurdish (ckb) and English support
 
 ## Screenshots
-<p align="center">
-  <img src="screenshots/1.png" width="240" alt="Screenshot 1" />
-  <img src="screenshots/2.png" width="240" alt="Screenshot 2" />
-  <img src="screenshots/3.png" width="240" alt="Screenshot 3" />
-</p>
-<p align="center">
-  <img src="screenshots/4.png" width="240" alt="Screenshot 4" />
-  <img src="screenshots/5.png" width="240" alt="Screenshot 5" />
-  <img src="screenshots/6.png" width="240" alt="Screenshot 6" />
-</p>
-<p align="center">
-  <img src="screenshots/7.png" width="240" alt="Screenshot 7" />
-</p>
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/dashboard-overview.png" width="240" alt="Dashboard overview" />
+      <br/>Dashboard overview
+    </td>
+    <td align="center">
+      <img src="screenshots/appliances-grid.png" width="240" alt="Appliances grid" />
+      <br/>Appliances grid
+    </td>
+    <td align="center">
+      <img src="screenshots/add-appliance-dialog.png" width="240" alt="Add appliance dialog" />
+      <br/>Add appliance dialog
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="screenshots/delete-appliance-confirmation.png" width="240" alt="Delete appliance confirmation" />
+      <br/>Delete appliance confirmation
+    </td>
+    <td align="center">
+      <img src="screenshots/offline-snackbar.png" width="240" alt="Offline error snackbar" />
+      <br/>Offline error snackbar
+    </td>
+    <td align="center">
+      <img src="screenshots/mobile-dashboard.png" width="240" alt="Mobile dashboard" />
+      <br/>Mobile dashboard
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="screenshots/mobile-appliances.png" width="240" alt="Mobile appliances list" />
+      <br/>Mobile appliances list
+    </td>
+  </tr>
+</table>
 
 ## Tech Stack
 **Frontend**
