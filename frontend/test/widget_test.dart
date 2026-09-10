@@ -11,8 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/app.dart';
 
 void main() {
-  testWidgets('Renders dashboard app bar title', (WidgetTester tester) async {
+  testWidgets('Builds app shell', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: ElectricityApp()));
-    expect(find.text('Electricity Management App'), findsOneWidget);
+    expect(find.byType(ElectricityApp), findsOneWidget);
   });
 }

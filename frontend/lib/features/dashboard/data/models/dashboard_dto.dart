@@ -43,7 +43,11 @@ class DashboardDto {
     final chartPoints = <ChartPoint>[];
     for (var i = 0; i < lineChart.points.length; i++) {
       chartPoints.add(
-        ChartPoint(x: (i + 1).toDouble(), y: lineChart.points[i].y),
+        ChartPoint(
+          x: (i + 1).toDouble(),
+          y: lineChart.points[i].y,
+          label: lineChart.points[i].x,
+        ),
       );
     }
 
@@ -52,6 +56,7 @@ class DashboardDto {
           (slice) => ApplianceBreakdown(
             name: slice.name,
             percentage: slice.pct,
+            dailyKwh: slice.dailyKwh,
             color: _colorForName(slice.name),
           ),
         )
@@ -81,6 +86,9 @@ class SummaryDto {
     required this.monthlyCostIqd,
     required this.dailyChangePct,
     required this.costChangePct,
+    required this.outageMinutesToday,
+    required this.outageTrackingActive,
+    this.outageTrackingStartedAt,
   });
 
   final double dailyKwh;
@@ -88,10 +96,20 @@ class SummaryDto {
   final double monthlyCostIqd;
   final double dailyChangePct;
   final double costChangePct;
+  final int outageMinutesToday;
+  final bool outageTrackingActive;
+  final DateTime? outageTrackingStartedAt;
 
   factory SummaryDto.fromJson(Map<String, dynamic> json) {
     double parseNum(dynamic value) =>
         value is int ? value.toDouble() : (value as num?)?.toDouble() ?? 0;
+    DateTime? parseDateTime(dynamic value) {
+      final raw = value?.toString();
+      if (raw == null || raw.isEmpty) {
+        return null;
+      }
+      return DateTime.tryParse(raw)?.toLocal();
+    }
 
     return SummaryDto(
       dailyKwh: parseNum(json['daily_kwh']),
@@ -99,6 +117,11 @@ class SummaryDto {
       monthlyCostIqd: parseNum(json['monthly_cost_iqd']),
       dailyChangePct: parseNum(json['daily_change_pct']),
       costChangePct: parseNum(json['cost_change_pct']),
+      outageMinutesToday: (json['outage_minutes_today'] as num?)?.toInt() ?? 0,
+      outageTrackingActive: json['outage_tracking_active'] == true,
+      outageTrackingStartedAt: parseDateTime(
+        json['outage_tracking_started_at'],
+      ),
     );
   }
 
@@ -109,6 +132,9 @@ class SummaryDto {
       estimatedCost: monthlyCostIqd,
       dailyChangePct: dailyChangePct,
       costChangePct: costChangePct,
+      outageMinutesToday: outageMinutesToday,
+      outageTrackingActive: outageTrackingActive,
+      outageTrackingStartedAt: outageTrackingStartedAt,
     );
   }
 }
@@ -154,11 +180,13 @@ class PieSliceDto {
     required this.applianceId,
     required this.name,
     required this.pct,
+    required this.dailyKwh,
   });
 
   final String applianceId;
   final String name;
   final double pct;
+  final double dailyKwh;
 
   factory PieSliceDto.fromJson(Map<String, dynamic> json) {
     double parseNum(dynamic value) =>
@@ -168,6 +196,7 @@ class PieSliceDto {
       applianceId: json['appliance_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       pct: parseNum(json['pct']),
+      dailyKwh: parseNum(json['daily_kwh']),
     );
   }
 }
@@ -221,14 +250,14 @@ class ApplianceDto {
 }
 
 Color _colorForName(String name) {
-  switch (name) {
-    case 'Air Conditioner':
-      return AppColors.primary;
-    case 'Microwave':
-      return const Color(0xFFF97316);
-    case 'LED TV':
-      return const Color(0xFF22C55E);
-    default:
-      return AppColors.accentBlue;
-  }
+  const palette = <Color>[
+    AppColors.primary,
+    AppColors.warning,
+    AppColors.positive,
+    AppColors.chartLine2,
+    AppColors.info,
+    AppColors.negative,
+  ];
+  final hash = name.runes.fold<int>(0, (sum, rune) => sum + rune);
+  return palette[hash % palette.length];
 }

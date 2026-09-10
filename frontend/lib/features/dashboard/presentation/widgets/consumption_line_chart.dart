@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/chart_point.dart';
+import '../utils/dashboard_responsive.dart';
 
 class ConsumptionLineChart extends StatelessWidget {
   const ConsumptionLineChart({
@@ -21,21 +22,27 @@ class ConsumptionLineChart extends StatelessWidget {
     if (points.isEmpty) {
       return const SizedBox(height: 300);
     }
+
     final spots = points.map((point) => FlSpot(point.x, point.y)).toList();
     final maxVal = points.map((p) => p.y).reduce(max);
     final minVal = points.map((p) => p.y).reduce(min);
-    final padding = (maxVal * 0.2).clamp(0.2, 10.0);
+    final padding = max((maxVal - minVal) * 0.14, 0.2);
     final maxY = maxVal + padding;
     final minY = max(0.0, minVal - padding);
     final range = (maxY - minY).clamp(0.5, double.infinity);
-    final yInterval = isMonthly
-        ? (range / 5).clamp(2.0, 50.0)
-        : (range / 5).clamp(0.2, 5.0);
-    const axisTextColor = AppColors.textPrimary;
+    final yInterval = _niceInterval(range.toDouble());
+    final axisTextColor = AppColors.textPrimaryFor(context);
+    final axisTickSize = DashboardResponsive.sp(context, 10, min: 8.5, max: 11);
+    final axisLabelSize = DashboardResponsive.sp(
+      context,
+      11,
+      min: 9.5,
+      max: 12,
+    );
     final screenWidth = MediaQuery.of(context).size.width;
     final chartWidth = max(
       screenWidth * 0.95,
-      points.length * (isMonthly ? 28.0 : 20.0),
+      points.length * (isMonthly ? 32.0 : 24.0),
     );
     const bottomLabelPadding = EdgeInsets.only(top: 10);
     const leftLabelPadding = EdgeInsets.only(top: 8, right: 6);
@@ -51,19 +58,28 @@ class ConsumptionLineChart extends StatelessWidget {
               LineChartData(
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (_) => AppColors.primary,
+                    getTooltipColor: (_) => const Color(0xFF0F172A),
                     getTooltipItems: (touchedSpots) {
-                      return touchedSpots
-                          .map(
-                            (spot) => LineTooltipItem(
-                              spot.y.toStringAsFixed(isMonthly ? 1 : 2),
-                              const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          )
-                          .toList();
+                      return touchedSpots.map((spot) {
+                        final point = _pointForX(spot.x);
+                        final label = point == null
+                            ? ''
+                            : isMonthly
+                            ? _formatMonthLabel(point.label)
+                            : _formatDayLabel(point.label);
+                        final valueLabel =
+                            '${spot.y.toStringAsFixed(isMonthly ? 1 : 2)} kWh';
+                        final text = label.isEmpty
+                            ? valueLabel
+                            : '$label\n$valueLabel';
+                        return LineTooltipItem(
+                          text,
+                          const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }).toList();
                     },
                   ),
                 ),
@@ -72,13 +88,15 @@ class ConsumptionLineChart extends StatelessWidget {
                 gridData: FlGridData(
                   drawVerticalLine: false,
                   horizontalInterval: yInterval,
-                  getDrawingHorizontalLine: (value) =>
-                      FlLine(color: AppColors.cardBorder, strokeWidth: 1),
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: AppColors.borderFor(context),
+                    strokeWidth: 1,
+                  ),
                 ),
                 borderData: FlBorderData(
                   show: true,
-                  border: const Border.fromBorderSide(
-                    BorderSide(color: AppColors.cardBorder),
+                  border: Border.fromBorderSide(
+                    BorderSide(color: AppColors.borderFor(context)),
                   ),
                 ),
                 titlesData: FlTitlesData(
@@ -92,34 +110,41 @@ class ConsumptionLineChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 44,
-                      interval: isMonthly ? 1 : 5,
-                      getTitlesWidget: (value, meta) => isMonthly
+                      interval: 1,
+                      getTitlesWidget: (value, _) => isMonthly
                           ? Padding(
                               padding: bottomLabelPadding,
-                              child: _monthTitle(value, axisTextColor),
+                              child: _monthTitle(
+                                value,
+                                axisTextColor,
+                                axisLabelSize,
+                              ),
                             )
                           : Padding(
                               padding: bottomLabelPadding,
-                              child:
-                                  _dayTitle(value, points.length, axisTextColor),
+                              child: _dayTitle(
+                                value,
+                                axisTextColor,
+                                axisLabelSize,
+                              ),
                             ),
                     ),
                   ),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 30,
+                      reservedSize: 38,
                       interval: yInterval,
-                      getTitlesWidget: (value, meta) {
-                        // Hide the bottom-most tick to keep it from colliding with X labels.
-                        final isMinTick = (value - minY).abs() < yInterval * 0.4;
+                      getTitlesWidget: (value, _) {
+                        final isMinTick =
+                            (value - minY).abs() < yInterval * 0.4;
                         if (isMinTick) return const SizedBox.shrink();
                         return Padding(
                           padding: leftLabelPadding,
                           child: Text(
-                            value.toStringAsFixed(isMonthly ? 0 : 1),
+                            _formatAxisValue(value),
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: axisTickSize,
                               fontWeight: FontWeight.w600,
                               color: axisTextColor,
                             ),
@@ -133,12 +158,21 @@ class ConsumptionLineChart extends StatelessWidget {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    color: AppColors.primary,
+                    color: const Color(0xFF334155),
                     barWidth: 3,
-                    dotData: const FlDotData(show: false),
+                    dotData: FlDotData(
+                      show: true,
+                      checkToShowDot: (spot, _) => spot.y == maxVal,
+                      getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
+                        radius: 4.5,
+                        color: const Color(0xFF0F172A),
+                        strokeColor: AppColors.surfaceFor(context),
+                        strokeWidth: 2,
+                      ),
+                    ),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: AppColors.primary.withValues(alpha: 0.08),
+                      color: const Color(0xFFF1F5F9),
                     ),
                   ),
                 ],
@@ -150,26 +184,93 @@ class ConsumptionLineChart extends StatelessWidget {
     );
   }
 
-  Widget _dayTitle(double value, int total, Color axisColor) {
-    if (value < 1 || value > total) {
+  ChartPoint? _pointForX(double x) {
+    final index = x.round() - 1;
+    if (index < 0 || index >= points.length) {
+      return null;
+    }
+    return points[index];
+  }
+
+  Widget _dayTitle(double value, Color axisColor, double fontSize) {
+    final index = value.round() - 1;
+    if (index < 0 || index >= points.length) {
       return const SizedBox.shrink();
     }
-    if (value % 5 != 0 && value != 1 && value != total) {
+    if (index % 5 != 0 && index != 0 && index != points.length - 1) {
       return const SizedBox.shrink();
     }
+
     return Text(
-      'ڕۆژ ${value.toInt()}',
-      style: TextStyle(
-        fontSize: 11,
-        color: axisColor,
-      ),
+      _formatDayLabel(points[index].label),
+      style: TextStyle(fontSize: fontSize, color: axisColor),
     );
   }
 
-  Widget _monthTitle(double value, Color axisColor) {
+  Widget _monthTitle(double value, Color axisColor, double fontSize) {
+    final index = value.round() - 1;
+    if (index < 0 || index >= points.length) {
+      return const SizedBox.shrink();
+    }
+    if (points.length > 8 && index.isOdd && index != points.length - 1) {
+      return const SizedBox.shrink();
+    }
+
     return Text(
-      'مانگ ${value.toInt()}',
-      style: TextStyle(fontSize: 11, color: axisColor),
+      _formatMonthLabel(points[index].label),
+      style: TextStyle(fontSize: fontSize, color: axisColor),
     );
+  }
+
+  double _niceInterval(double range) {
+    final rough = max(range / 5, 0.1);
+    final magnitude = pow(10, (log(rough) / ln10).floor()).toDouble();
+    final residual = rough / magnitude;
+
+    double step;
+    if (residual <= 1) {
+      step = 1;
+    } else if (residual <= 2) {
+      step = 2;
+    } else if (residual <= 5) {
+      step = 5;
+    } else {
+      step = 10;
+    }
+    return step * magnitude;
+  }
+
+  String _formatAxisValue(double value) {
+    if (value >= 1000) {
+      final compact = value / 1000;
+      final decimals = compact >= 10 ? 0 : 1;
+      return '${compact.toStringAsFixed(decimals)}k';
+    }
+    if (value >= 100) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toStringAsFixed(1);
+  }
+
+  String _formatDayLabel(String raw) {
+    final date = DateTime.tryParse(raw);
+    if (date != null) {
+      final month = date.month.toString().padLeft(2, '0');
+      final day = date.day.toString().padLeft(2, '0');
+      return '$month/$day';
+    }
+    if (raw.length >= 10) {
+      return raw.substring(5, 10);
+    }
+    return raw;
+  }
+
+  String _formatMonthLabel(String raw) {
+    if (raw.length >= 7) {
+      final month = raw.substring(5, 7);
+      final year = raw.substring(2, 4);
+      return '$month/$year';
+    }
+    return raw;
   }
 }

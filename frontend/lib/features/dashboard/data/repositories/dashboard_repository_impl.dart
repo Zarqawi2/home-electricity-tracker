@@ -16,4 +16,19 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final dto = await _remoteDataSource.fetchDashboard(date: date, mode: mode);
     return dto.toDomain();
   }
+
+  @override
+  Future<void> setTodayOutageMinutes(int minutes) {
+    return _remoteDataSource.setTodayOutageMinutes(minutes);
+  }
+
+  @override
+  Future<void> startOutageTracking() {
+    return _remoteDataSource.startOutageTracking();
+  }
+
+  @override
+  Future<int> stopOutageTracking() {
+    return _remoteDataSource.stopOutageTracking();
+  }
 }

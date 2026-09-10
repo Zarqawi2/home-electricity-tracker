@@ -1,10 +1,17 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../viewmodels/onboarding_view_model.dart';
+import '../../../../core/theme/app_responsive.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../viewmodels/onboarding_view_model.dart';
+
+const _canvas = Color(0xFFF8FAFC);
+const _surface = Colors.white;
+const _ink = Color(0xFF0F172A);
+const _muted = Color(0xFF64748B);
+const _line = Color(0xFFE2E8F0);
+const _selected = Color(0xFF2563EB);
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -19,31 +26,25 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   final _pages = const [
     _OnboardData(
-      imageAsset: 'assets/img/1.jpg',
-      icon: Icons.bolt,
-      title: 'ژمێری کارەبای ڕۆژانەت بەژێر چاودێری بەرەوە',
+      icon: Icons.electric_meter_outlined,
+      badgeLabel: 'چاودێری ڕاستەوخۆ',
+      title: 'بەکارهێنانی کارەبا بە وردی ببینە',
       subtitle:
-          'بینەوە چەند کارەبا لە هەر ئامێر دەردەچێت و زەبڵەکان بناسە پێش ئەوەی وەسڵ بگەیت.',
-      badgeColor: Color(0xFFDDE9FF),
-      badgeIconColor: AppColors.primary,
+          'بە شێوەی ڕاستەوخۆ بزانە هەر ئامێرێک چەند kWh بەکاردێنێت و زوو ئاگاداربە لە بەشە زۆر-خەرجەکان.',
     ),
     _OnboardData(
-      imageAsset: 'assets/img/2.jpg',
-      icon: Icons.attach_money,
-      title: 'پێشبینی وەسڵی مانگانە',
+      icon: Icons.savings_outlined,
+      badgeLabel: 'پێشبینی دینار',
+      title: 'تێچووی مانگانە پێشبینی بکە',
       subtitle:
-          'وەسڵەکەت پێش کات بزانە بە هەژماری ئۆتۆماتیکی نرخەکانی IQD بۆ هەر ئامێرێک.',
-      badgeColor: Color(0xFFFFF3D6),
-      badgeIconColor: Color(0xFFEEB211),
+          'پێش ڕۆژی کۆتایی مانگ بزانە چەند دینار دەبێت و پلانی بەدجەتەکەت بە داتا دروست بکە.',
     ),
     _OnboardData(
-      imageAsset: 'assets/img/3.jfif',
-      icon: Icons.home_filled,
-      title: 'کۆنتڕۆڵی ئامێرەکانی ماڵ',
+      icon: Icons.home_outlined,
+      badgeLabel: 'کۆنترۆڵی ماڵ',
+      title: 'ئامێرەکانی ماڵ بە زیرەکی ڕێکبخە',
       subtitle:
-          'ئامێرەکان بکە کار/بوەستن، کاتژمێری بەکارهێنان ڕێک بخە و پەندەکانی کارامەیی لەمەرج بدەست بگرە.',
-      badgeColor: Color(0xFFE7F7EE),
-      badgeIconColor: Color(0xFF22C55E),
+          'کار/وەستان و کاتژمێری بەکارهێنان دابنێ، هۆشداری و ڕێنمایی باشتر وەربگرە بۆ کەمکردنەوەی خەرجی.',
     ),
   ];
 
@@ -56,16 +57,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   Future<void> _completeAndNavigate() async {
     if (_isFinishing) return;
     _isFinishing = true;
-    final vm = ref.read(onboardingViewModelProvider.notifier);
-    final success = await vm.complete();
+    final success = await ref
+        .read(onboardingViewModelProvider.notifier)
+        .complete();
     if (!success || !mounted) {
       _isFinishing = false;
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.go('/');
-      }
+      if (mounted) context.go('/');
     });
   }
 
@@ -73,20 +73,20 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final state = ref.read(onboardingViewModelProvider);
     if (state.pageIndex < _pages.length - 1) {
       await _controller.nextPage(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
       );
-    } else {
-      await _completeAndNavigate();
+      return;
     }
+    await _completeAndNavigate();
   }
 
   Future<void> _back() async {
     final state = ref.read(onboardingViewModelProvider);
     if (state.pageIndex > 0) {
       await _controller.previousPage(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
       );
     }
   }
@@ -96,73 +96,154 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final vmState = ref.watch(onboardingViewModelProvider);
     final isLastPage = vmState.pageIndex == _pages.length - 1;
     final isCompleting = vmState.isCompleting;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final clampedWidth = screenWidth.clamp(280.0, 430.0);
-    final backWidth = vmState.pageIndex > 0 ? clampedWidth * 0.33 : 0.0;
-    final nextWidth = clampedWidth * 0.34;
-    final backPadding = EdgeInsets.symmetric(
-      horizontal: (screenWidth * 0.03).clamp(10, 16),
-      vertical: 9,
+    final media = MediaQuery.of(context);
+    final responsiveMedia = media.copyWith(
+      textScaler: AppResponsive.textScaler(media, min: 0.9, max: 1.16),
     );
-    final nextPadding = EdgeInsets.symmetric(
-      horizontal: (screenWidth * 0.06).clamp(18, 26),
-      vertical: (screenWidth * 0.03).clamp(12, 15),
-    );
+    final horizontalPadding = (media.size.width * 0.055).clamp(14.0, 30.0);
+    final actionPadding = (media.size.width * 0.03).clamp(9.0, 14.0);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            Expanded(
-              child: PageView.builder(
-                controller: _controller,
-                onPageChanged: (i) =>
-                    ref.read(onboardingViewModelProvider.notifier).setPage(i),
-                itemCount: _pages.length,
-                itemBuilder: (context, i) {
-                  final item = _pages[i];
-                  return _OnboardSlide(data: item);
-                },
-              ),
-            ),
-            _Dots(current: vmState.pageIndex, total: _pages.length),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: backWidth,
-                    child: vmState.pageIndex > 0
-                        ? AppButton(
-                            label: 'گەڕانەوە',
-                          variant: AppButtonVariant.outline,
-                          onPressed: (isCompleting || _isFinishing) ? null : _back,
-                          padding: backPadding,
-                          borderRadius: 8,
-                        )
-                        : const SizedBox.shrink(),
+    return MediaQuery(
+      data: responsiveMedia,
+      child: Scaffold(
+        backgroundColor: _canvas,
+        body: Directionality(
+          textDirection: TextDirection.rtl,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    10,
+                    horizontalPadding,
+                    6,
                   ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: nextWidth,
-                    child: AppButton(
-                      label: isLastPage ? 'دەستپێکردن' : 'دواتر',
-                      variant: AppButtonVariant.primary,
-                      onPressed: (isCompleting || _isFinishing) ? null : _next,
-                      isLoading: isCompleting,
-                      padding: nextPadding,
-                      borderRadius: 12,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _surface,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: _line),
+                        ),
+                        child: Text(
+                          'ڕێنمایی سەرەتا',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: _ink,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (!isLastPage)
+                        AppButton(
+                          label: 'تێپەڕاندن',
+                          variant: AppButtonVariant.ghost,
+                          textColor: _ink,
+                          onPressed: (isCompleting || _isFinishing)
+                              ? null
+                              : _completeAndNavigate,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
+                          fontSize: 12,
+                        ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _controller,
+                    onPageChanged: (index) => ref
+                        .read(onboardingViewModelProvider.notifier)
+                        .setPage(index),
+                    itemCount: _pages.length,
+                    itemBuilder: (context, index) => _OnboardSlide(
+                      data: _pages[index],
+                      isActive: index == vmState.pageIndex,
                     ),
                   ),
-                ],
-              ),
+                ),
+                _Dots(current: vmState.pageIndex, total: _pages.length),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    4,
+                    horizontalPadding,
+                    12,
+                  ),
+                  child: Container(
+                    padding: EdgeInsets.all(actionPadding),
+                    decoration: BoxDecoration(
+                      color: _surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _line),
+                    ),
+                    child: Row(
+                      children: [
+                        if (vmState.pageIndex > 0) ...[
+                          Expanded(
+                            flex: 38,
+                            child: AppButton(
+                              label: 'گەڕانەوە',
+                              variant: AppButtonVariant.neutral,
+                              backgroundColor: _surface,
+                              textColor: _ink,
+                              borderColor: _line,
+                              onPressed: (isCompleting || _isFinishing)
+                                  ? null
+                                  : _back,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              borderRadius: 11,
+                              fontSize: 12,
+                              icon: Icons.arrow_forward,
+                              iconSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          flex: 62,
+                          child: AppButton(
+                            label: isLastPage ? 'دەستپێکردن' : 'بەردەوامبوون',
+                            variant: AppButtonVariant.neutral,
+                            backgroundColor: const Color(0xFFF1F5F9),
+                            textColor: _ink,
+                            borderColor: _ink,
+                            onPressed: (isCompleting || _isFinishing)
+                                ? null
+                                : _next,
+                            isLoading: isCompleting,
+                            icon: isLastPage
+                                ? Icons.check_circle_outline
+                                : Icons.arrow_back,
+                            iconSize: 17,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 11,
+                            ),
+                            borderRadius: 12,
+                            fontSize: 12.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-          ],
+          ),
         ),
       ),
     );
@@ -170,69 +251,150 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 }
 
 class _OnboardSlide extends StatelessWidget {
-  const _OnboardSlide({required this.data});
+  const _OnboardSlide({required this.data, required this.isActive});
 
   final _OnboardData data;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Column(
-        children: [
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: data.imageAsset != null
-                  ? Image.asset(
-                      data.imageAsset!,
-                      fit: BoxFit.cover,
-                    )
-                  : Image.network(
-                      data.imageUrl ?? '',
-                      fit: BoxFit.cover,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxCardWidth = constraints.maxWidth.clamp(0.0, 620.0);
+        final compact =
+            constraints.maxHeight < 620 || constraints.maxWidth < 350;
+        final imageHeight = (constraints.maxHeight * (compact ? 0.34 : 0.4))
+            .clamp(180.0, 290.0)
+            .toDouble();
+        final titleSize = (constraints.maxWidth * 0.062)
+            .clamp(21.0, 29.0)
+            .toDouble();
+        final subtitleSize = (constraints.maxWidth * 0.038)
+            .clamp(13.0, 16.0)
+            .toDouble();
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxCardWidth),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                (constraints.maxWidth * 0.05).clamp(12.0, 24.0),
+                8,
+                (constraints.maxWidth * 0.05).clamp(12.0, 24.0),
+                4,
+              ),
+              child: Column(
+                children: [
+                  AnimatedScale(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    scale: isActive ? 1 : 0.99,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _line),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: SizedBox(
+                          height: imageHeight,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ColoredBox(
+                                color: _canvas,
+                                child: Center(
+                                  child: Container(
+                                    width: 92,
+                                    height: 92,
+                                    decoration: BoxDecoration(
+                                      color: _surface,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: _line),
+                                    ),
+                                    child: Icon(
+                                      data.icon,
+                                      size: 44,
+                                      color: _ink,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _surface,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(color: _line),
+                                  ),
+                                  child: Text(
+                                    data.badgeLabel,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: _ink,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: _surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _line),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data.title,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                fontSize: titleSize,
+                                height: 1.2,
+                                color: _ink,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          data.subtitle,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontSize: subtitleSize,
+                                height: 1.55,
+                                color: _muted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 26),
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: data.badgeColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              data.icon,
-              size: 32,
-              color: data.badgeIconColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            data.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            data.subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 15,
-              color: Color(0xFF6B7280),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -247,15 +409,16 @@ class _Dots extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(total, (i) {
-        final active = i == current;
+      children: List.generate(total, (index) {
+        final active = index == current;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          width: active ? 24 : 10,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          width: active ? 30 : 10,
           height: 10,
-          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: BoxDecoration(
-            color: active ? AppColors.primary : const Color(0xFFD1D5DB),
+            color: active ? _selected : _line,
             borderRadius: BorderRadius.circular(10),
           ),
         );
@@ -266,21 +429,14 @@ class _Dots extends StatelessWidget {
 
 class _OnboardData {
   const _OnboardData({
-    // ignore: unused_element_parameter
-    this.imageUrl,
-    this.imageAsset,
     required this.icon,
+    required this.badgeLabel,
     required this.title,
     required this.subtitle,
-    required this.badgeColor,
-    required this.badgeIconColor,
   });
 
-  final String? imageUrl;
-  final String? imageAsset;
   final IconData icon;
+  final String badgeLabel;
   final String title;
   final String subtitle;
-  final Color badgeColor;
-  final Color badgeIconColor;
 }

@@ -10,7 +10,7 @@ class ElectricityApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Electricity Management App',
+      title: 'Runaki',
       debugShowCheckedModeBanner: false,
       locale: const Locale('ckb', 'IQ'),
       supportedLocales: const [Locale('ckb', 'IQ'), Locale('en')],
@@ -26,7 +26,6 @@ class ElectricityApp extends StatelessWidget {
         );
       },
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
       routerConfig: appRouter,
       builder: (context, child) {

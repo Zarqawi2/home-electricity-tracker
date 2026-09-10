@@ -1,3 +1,5 @@
+import '../services/consumption_calculator.dart';
+
 class Appliance {
   const Appliance({
     required this.id,
@@ -15,7 +17,11 @@ class Appliance {
   final double dailyUseHours;
   final bool isOn;
 
-  double get dailyKwh => (powerW / 1000) * dailyUseHours;
+  double get dailyKwh => scheduledDailyKwh(
+    powerWatts: powerW,
+    dailyUseHours: dailyUseHours,
+    isOn: isOn,
+  );
 
   Appliance copyWith({
     String? id,

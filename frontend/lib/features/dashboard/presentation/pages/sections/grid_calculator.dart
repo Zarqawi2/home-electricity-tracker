@@ -12,16 +12,16 @@ class GridCalculator {
   int get summaryColumns => contentWidth > 900
       ? 3
       : contentWidth > 640
-          ? 2
-          : 1;
+      ? 2
+      : 1;
 
   int get chartColumns => contentWidth > 1000 ? 2 : 1;
 
-  int get applianceColumns => contentWidth > 900
+  int get applianceColumns => contentWidth > 1120
       ? 3
-      : contentWidth > 640
-          ? 2
-          : 1;
+      : contentWidth > 700
+      ? 2
+      : 1;
 
   double widthForColumns(int columns) {
     if (columns <= 1) return contentWidth;
@@ -30,13 +30,12 @@ class GridCalculator {
   }
 
   double widthForApplianceColumns(int columns) {
+    if (columns <= 1) return contentWidth;
     final available = (contentWidth - applianceSlack).clamp(
       0.0,
       double.infinity,
     );
-    if (columns <= 1) return available;
     final w = (available - spacing * (columns - 1)) / columns;
     return w.clamp(0.0, double.infinity);
   }
 }
-

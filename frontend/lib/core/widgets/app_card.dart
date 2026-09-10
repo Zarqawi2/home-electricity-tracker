@@ -21,17 +21,11 @@ class AppCard extends StatelessWidget {
     return Container(
       margin: margin ?? EdgeInsets.zero,
       padding: padding,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: color ?? AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            offset: const Offset(0, 2),
-            blurRadius: 8,
-          ),
-        ],
+        color: color ?? AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.lightBorder),
       ),
       child: child,
     );

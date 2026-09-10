@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../../domain/entities/appliance_breakdown.dart';
 import '../../../domain/entities/chart_point.dart';
@@ -27,126 +28,123 @@ class ChartsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = dashboardState.data;
-    final isMonthly = data?.chartMode == DashboardViewMode.monthly;
-    final hasLineData = chartPoints.isNotEmpty;
-    final hasPieData = breakdown.isNotEmpty;
-    final showLineLoader = dashboardState.isLoading && !hasLineData;
-    final showPieLoader = dashboardState.isLoading && !hasPieData;
-    final showLineUpdating = dashboardState.isLoading && hasLineData;
-    final showPieUpdating = dashboardState.isLoading && hasPieData;
+    final isMonthly =
+        dashboardState.data?.chartMode == DashboardViewMode.monthly;
+    final hasLineData = chartPoints.any((point) => point.y > 0);
+    final hasPieData = breakdown.any((item) => item.dailyKwh > 0);
 
-    return Wrap(
-      spacing: spacing,
-      runSpacing: spacing,
-      alignment: WrapAlignment.center,
-      runAlignment: WrapAlignment.center,
+    if (!hasLineData && !hasPieData) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: dashboardState.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Text(
+                'بۆ بینینی خەمڵاندن، ئامێرێکی چالاک زیاد بکە.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondaryFor(context),
+                ),
+              ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: grid.widthForColumns(grid.chartColumns),
-          child: AppCard(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 360),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isMonthly
-                        ? 'خەرجی کارەبا (12 مانگ)'
-                        : 'خەرجی کارەبا (30 ڕۆژ)',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  if (showLineLoader)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (!hasLineData)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: SizedBox(
-                        height: 250,
-                        child: Center(
-                          child: Text(
-                            'هێشتا داتای خەرجی بوونی نییە.',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    Column(
-                      children: [
-                        if (showLineUpdating)
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 8),
-                            child: SizedBox(
-                              height: 3,
-                              child: LinearProgressIndicator(),
-                            ),
-                          ),
-                        ConsumptionLineChart(
-                          points: chartPoints,
-                          isMonthly: isMonthly,
-                        ),
-                      ],
-                    ),
-                ],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.info_outline, size: 18, color: Color(0xFF0F172A)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'ئەم چارتانە خەمڵاندنن بە پێی ڕێکخستنی ئێستای ئامێرەکان؛ تۆماری ڕاستەقینەی کنتۆر نین.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondaryFor(context),
+                  height: 1.6,
+                ),
               ),
             ),
-          ),
+          ],
         ),
-        SizedBox(
-          width: grid.widthForColumns(grid.chartColumns),
-          child: AppCard(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 360),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isMonthly
-                        ? 'دابەشکردنی ئامێرەکان (مانگانە)'
-                        : 'دابەشکردنی ئامێرەکان (ڕۆژانە)',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  if (showPieLoader)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (!hasPieData)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: SizedBox(
-                        height: 250,
-                        child: Center(
-                          child: Text(
-                            'داتای دابەشکردنی ئامێر نییە.',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
+        const SizedBox(height: 16),
+        if (dashboardState.isLoading) ...[
+          LinearProgressIndicator(
+            color: AppColors.textPrimaryFor(context),
+            backgroundColor: AppColors.borderFor(context),
+          ),
+          const SizedBox(height: 12),
+        ],
+        Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            if (hasLineData)
+              SizedBox(
+                width: grid.widthForColumns(hasPieData ? grid.chartColumns : 1),
+                child: AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _ChartCardTitle(
+                        title: isMonthly
+                            ? 'خەمڵاندنی ١٢ مانگ'
+                            : 'خەمڵاندنی ٣٠ ڕۆژ',
+                        icon: Icons.show_chart_outlined,
                       ),
-                    )
-                  else
-                    Column(
-                      children: [
-                        if (showPieUpdating)
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 8),
-                            child: SizedBox(
-                              height: 3,
-                              child: LinearProgressIndicator(),
-                            ),
-                          ),
-                        AppliancePieChart(breakdown: breakdown),
-                      ],
-                    ),
-                ],
+                      const SizedBox(height: 16),
+                      ConsumptionLineChart(
+                        points: chartPoints,
+                        isMonthly: isMonthly,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            if (hasPieData)
+              SizedBox(
+                width: grid.widthForColumns(
+                  hasLineData ? grid.chartColumns : 1,
+                ),
+                child: AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _ChartCardTitle(
+                        title: 'بەشی هەر ئامێر لە بەکارهێنان',
+                        icon: Icons.pie_chart_outline,
+                      ),
+                      const SizedBox(height: 16),
+                      AppliancePieChart(breakdown: breakdown),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ChartCardTitle extends StatelessWidget {
+  const _ChartCardTitle({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 19, color: const Color(0xFF0F172A)),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ],

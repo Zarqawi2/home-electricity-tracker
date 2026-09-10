@@ -1,17 +1,14 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/providers.dart';
 import '../../data/datasources/dashboard_remote_datasource.dart';
+import '../../data/datasources/local_appliance_store.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import '../../domain/entities/view_mode.dart';
 import '../../domain/repositories/dashboard_repository.dart';
 import '../viewmodels/dashboard_state.dart';
 
 final dashboardRemoteDataSourceProvider = Provider<DashboardRemoteDataSource>(
-  (ref) => DashboardRemoteDataSource(ref.watch(dioClientProvider)),
+  (ref) => DashboardRemoteDataSource(LocalApplianceStore()),
 );
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
@@ -19,42 +16,27 @@ final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
 });
 
 class DashboardViewModel extends StateNotifier<DashboardUIState> {
-  DashboardViewModel({
-    required DashboardRepository repository,
-    required Connectivity connectivity,
-    required DioClient dioClient,
-  })  : _repository = repository,
-        _connectivity = connectivity,
-        _dioClient = dioClient,
-        super(DashboardUIState.initial()) {
+  DashboardViewModel({required DashboardRepository repository})
+    : _repository = repository,
+      super(DashboardUIState.initial()) {
     fetch();
   }
 
   final DashboardRepository _repository;
-  final Connectivity _connectivity;
-  final DioClient _dioClient;
 
   Future<void> fetch() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final status = await _connectivity.checkConnectivity();
-      if (status == ConnectivityResult.none) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'پەیوەندی ئینتەرنێت نییە',
-        );
-        return;
-      }
       final data = await _repository.fetchDashboard(
         date: state.date,
         mode: state.viewMode,
       );
       state = state.copyWith(data: data, isLoading: false, error: null);
-    } catch (e) {
-      final message = e is DioException
-          ? _dioClient.mapDioError(e)
-          : 'بارکردنی داشبۆرد سەرکەوتوو نەبوو';
-      state = state.copyWith(isLoading: false, error: message);
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load dashboard data.',
+      );
     }
   }
 
@@ -66,13 +48,46 @@ class DashboardViewModel extends StateNotifier<DashboardUIState> {
     state = state.copyWith(viewMode: mode);
     await fetch();
   }
+
+  Future<void> setTodayOutageMinutes(int minutes) async {
+    try {
+      await _repository.setTodayOutageMinutes(minutes);
+      await fetch();
+    } catch (_) {
+      state = state.copyWith(
+        error: 'پاشەکەوتکردنی کاتی قطع بوون سەرکەوتوو نەبوو.',
+      );
+    }
+  }
+
+  Future<void> startOutageTracking() async {
+    try {
+      await _repository.startOutageTracking();
+      await fetch();
+    } catch (_) {
+      state = state.copyWith(
+        error: 'دەستپێکردنی تۆمارکردنی قەطعبوون سەرکەوتوو نەبوو.',
+      );
+    }
+  }
+
+  Future<int> stopOutageTracking() async {
+    try {
+      final minutes = await _repository.stopOutageTracking();
+      await fetch();
+      return minutes;
+    } catch (_) {
+      state = state.copyWith(
+        error: 'وەستاندنی تۆمارکردنی قەطعبوون سەرکەوتوو نەبوو.',
+      );
+      return 0;
+    }
+  }
 }
 
 final dashboardProvider =
     StateNotifierProvider<DashboardViewModel, DashboardUIState>((ref) {
-  return DashboardViewModel(
-    repository: ref.watch(dashboardRepositoryProvider),
-    connectivity: ref.watch(connectivityProvider),
-    dioClient: ref.watch(dioClientProvider),
-  );
-});
+      return DashboardViewModel(
+        repository: ref.watch(dashboardRepositoryProvider),
+      );
+    });

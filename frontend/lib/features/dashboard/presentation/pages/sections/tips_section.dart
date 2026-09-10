@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/widgets/app_card.dart';
+import '../../utils/dashboard_responsive.dart';
 
 class TipsSection extends StatelessWidget {
   const TipsSection({super.key, required this.tips});
@@ -11,28 +12,29 @@ class TipsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      color: const Color(0xFFF1F5FF),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'پێشنیارەکانی کەمکردنەوەی خەرجی کارەبا',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(color: AppColors.primary),
+            'چۆن بەکارهێنانی کارەبا کەم بکەینەوە؟',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.textPrimaryFor(context),
+            ),
           ),
           const SizedBox(height: 10),
           if (tips.isEmpty)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline, color: AppColors.primary),
+                Icon(
+                  Icons.info_outline,
+                  color: AppColors.textPrimaryFor(context),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'هێشتا هیچ پێشنیارێک بوونی نییە.',
+                    'هێشتا هیچ پێشنیارێک نییە.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -45,11 +47,16 @@ class TipsSection extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '-',
                       style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 16,
+                        color: AppColors.textPrimaryFor(context),
+                        fontSize: DashboardResponsive.sp(
+                          context,
+                          16,
+                          min: 13,
+                          max: 17,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),

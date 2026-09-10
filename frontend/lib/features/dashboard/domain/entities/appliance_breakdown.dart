@@ -4,10 +4,12 @@ class ApplianceBreakdown {
   const ApplianceBreakdown({
     required this.name,
     required this.percentage,
+    required this.dailyKwh,
     required this.color,
   });
 
   final String name;
   final double percentage;
+  final double dailyKwh;
   final Color color;
 }

@@ -58,17 +58,20 @@ class _AppButtonState extends State<AppButton> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = _paletteFor(widget.variant, widget.selected);
+    final palette = _paletteFor(context, widget.variant, widget.selected);
     final disabled = widget.onPressed == null || widget.isLoading;
     final baseBg = widget.backgroundColor ?? palette.background;
     final baseText = widget.textColor ?? palette.text;
     final baseBorder = widget.borderColor ?? palette.border;
     final baseSplash = widget.splashColor ?? palette.splashColor;
 
-    final bgColor = disabled ? baseBg.withOpacity(0.6) : baseBg;
-    final fgColor = disabled ? baseText.withOpacity(0.6) : baseText;
+    final bgColor = disabled ? baseBg.withValues(alpha: 0.6) : baseBg;
+    final fgColor = disabled ? baseText.withValues(alpha: 0.6) : baseText;
+    final iconColor = disabled
+        ? AppColors.lightTextPrimary.withValues(alpha: 0.42)
+        : AppColors.lightTextPrimary;
     final effectiveBorderColor = disabled
-        ? baseBorder.withOpacity(0.5)
+        ? baseBorder.withValues(alpha: 0.5)
         : baseBorder;
 
     final content = AnimatedContainer(
@@ -81,16 +84,13 @@ class _AppButtonState extends State<AppButton> {
           color: effectiveBorderColor,
           width: palette.borderWidth,
         ),
-        boxShadow: widget.selected && palette.shadow != null
-            ? [palette.shadow!]
-            : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(widget.borderRadius),
           splashColor: baseSplash,
-          highlightColor: baseSplash?.withOpacity(0.08),
+          highlightColor: baseSplash?.withValues(alpha: 0.08),
           onHighlightChanged: (value) => setState(() => _pressed = value),
           onTap: disabled ? null : widget.onPressed,
           child: Padding(
@@ -107,12 +107,12 @@ class _AppButtonState extends State<AppButton> {
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(fgColor),
+                      valueColor: AlwaysStoppedAnimation<Color>(iconColor),
                     ),
                   ),
                 if (widget.isLoading) const SizedBox(width: 8),
                 if (!widget.isLoading && widget.icon != null) ...[
-                  Icon(widget.icon, size: widget.iconSize, color: fgColor),
+                  Icon(widget.icon, size: widget.iconSize, color: iconColor),
                   const SizedBox(width: 8),
                 ],
                 Flexible(
@@ -142,88 +142,76 @@ class _AppButtonState extends State<AppButton> {
     );
   }
 
-  _ButtonPalette _paletteFor(AppButtonVariant variant, bool selected) {
+  _ButtonPalette _paletteFor(
+    BuildContext context,
+    AppButtonVariant variant,
+    bool selected,
+  ) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final surface = theme.cardColor;
+    final border = theme.dividerColor;
+    final textPrimary =
+        theme.textTheme.bodyLarge?.color ?? AppColors.textPrimary;
+    final negative = AppColors.negativeFor(context);
+
     switch (variant) {
       case AppButtonVariant.primary:
         return _ButtonPalette(
-          background: AppColors.primary,
-          text: Colors.white,
-          border: AppColors.primary,
-          splashColor: AppColors.primary.withOpacity(0.12),
-          shadow: const BoxShadow(
-            color: Color(0x332563EB),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
+          background: surface,
+          text: textPrimary,
+          border: primary,
+          splashColor: primary.withValues(alpha: 0.08),
         );
       case AppButtonVariant.neutral:
         return _ButtonPalette(
-          background: selected
-              ? AppColors.primary.withOpacity(0.08)
-              : Colors.white,
-          text: selected ? AppColors.primary : AppColors.textPrimary,
-          border: selected ? AppColors.primary : AppColors.cardBorder,
-          splashColor: AppColors.primary.withOpacity(0.08),
+          background: selected ? AppColors.lightPrimarySoft : surface,
+          text: textPrimary,
+          border: selected ? primary : border,
+          splashColor: primary.withValues(alpha: 0.08),
         );
       case AppButtonVariant.outline:
         return _ButtonPalette(
-          background: Colors.white,
-          text: AppColors.primary,
-          border: AppColors.primary,
-          splashColor: AppColors.primary.withOpacity(0.08),
+          background: surface,
+          text: textPrimary,
+          border: border,
+          splashColor: primary.withValues(alpha: 0.08),
         );
       case AppButtonVariant.ghost:
         return _ButtonPalette(
           background: Colors.transparent,
-          text: AppColors.textPrimary,
+          text: textPrimary,
           border: Colors.transparent,
-          splashColor: AppColors.primary.withOpacity(0.08),
+          splashColor: primary.withValues(alpha: 0.08),
           borderWidth: 0,
         );
       case AppButtonVariant.segment:
         return _ButtonPalette(
-          background: selected ? AppColors.primary : Colors.white,
-          text: selected ? Colors.white : AppColors.textPrimary,
-          border: selected ? AppColors.primary : AppColors.cardBorder,
-          splashColor: AppColors.primary.withOpacity(0.08),
-          shadow: selected
-              ? BoxShadow(
-                  color: AppColors.primary.withOpacity(0.16),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              : null,
+          background: selected ? AppColors.lightPrimarySoft : surface,
+          text: textPrimary,
+          border: selected ? primary : border,
+          splashColor: primary.withValues(alpha: 0.08),
         );
       case AppButtonVariant.destructive:
         return _ButtonPalette(
-          background: AppColors.negative,
-          text: Colors.white,
-          border: AppColors.negative,
-          splashColor: AppColors.negative.withOpacity(0.12),
-          shadow: const BoxShadow(
-            color: Color(0x33DC2626),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
+          background: surface,
+          text: negative,
+          border: negative,
+          splashColor: negative.withValues(alpha: 0.08),
         );
       case AppButtonVariant.success:
         return _ButtonPalette(
-          background: AppColors.positive,
-          text: Colors.white,
-          border: AppColors.positive,
-          splashColor: AppColors.positive.withOpacity(0.12),
-          shadow: const BoxShadow(
-            color: Color(0x3316A34A),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
+          background: surface,
+          text: textPrimary,
+          border: border,
+          splashColor: primary.withValues(alpha: 0.08),
         );
       case AppButtonVariant.successOutline:
         return _ButtonPalette(
-          background: Colors.white,
-          text: AppColors.positive,
-          border: AppColors.positive,
-          splashColor: AppColors.positive.withOpacity(0.08),
+          background: surface,
+          text: textPrimary,
+          border: border,
+          splashColor: primary.withValues(alpha: 0.08),
         );
     }
   }
@@ -235,7 +223,6 @@ class _ButtonPalette {
     required this.text,
     required this.border,
     this.borderWidth = 1,
-    this.shadow,
     this.splashColor,
   });
 
@@ -243,6 +230,5 @@ class _ButtonPalette {
   final Color text;
   final Color border;
   final double borderWidth;
-  final BoxShadow? shadow;
   final Color? splashColor;
 }

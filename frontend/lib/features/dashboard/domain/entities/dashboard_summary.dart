@@ -5,6 +5,9 @@ class DashboardSummary {
     required this.estimatedCost,
     required this.dailyChangePct,
     required this.costChangePct,
+    required this.outageMinutesToday,
+    required this.outageTrackingActive,
+    this.outageTrackingStartedAt,
   });
 
   final double dailyKwh;
@@ -12,6 +15,9 @@ class DashboardSummary {
   final double estimatedCost;
   final double dailyChangePct;
   final double costChangePct;
+  final int outageMinutesToday;
+  final bool outageTrackingActive;
+  final DateTime? outageTrackingStartedAt;
 
   DashboardSummary copyWith({
     double? dailyKwh,
@@ -19,6 +25,9 @@ class DashboardSummary {
     double? estimatedCost,
     double? dailyChangePct,
     double? costChangePct,
+    int? outageMinutesToday,
+    bool? outageTrackingActive,
+    DateTime? outageTrackingStartedAt,
   }) {
     return DashboardSummary(
       dailyKwh: dailyKwh ?? this.dailyKwh,
@@ -26,6 +35,10 @@ class DashboardSummary {
       estimatedCost: estimatedCost ?? this.estimatedCost,
       dailyChangePct: dailyChangePct ?? this.dailyChangePct,
       costChangePct: costChangePct ?? this.costChangePct,
+      outageMinutesToday: outageMinutesToday ?? this.outageMinutesToday,
+      outageTrackingActive: outageTrackingActive ?? this.outageTrackingActive,
+      outageTrackingStartedAt:
+          outageTrackingStartedAt ?? this.outageTrackingStartedAt,
     );
   }
 }

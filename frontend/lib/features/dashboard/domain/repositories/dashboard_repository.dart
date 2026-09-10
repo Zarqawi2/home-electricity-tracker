@@ -6,4 +6,8 @@ abstract class DashboardRepository {
     required DateTime date,
     required DashboardViewMode mode,
   });
+
+  Future<void> setTodayOutageMinutes(int minutes);
+  Future<void> startOutageTracking();
+  Future<int> stopOutageTracking();
 }

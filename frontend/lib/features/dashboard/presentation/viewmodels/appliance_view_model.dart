@@ -1,10 +1,7 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/dio_client.dart';
-import '../../../../core/providers.dart';
 import '../../data/datasources/appliance_remote_datasource.dart';
+import '../../data/datasources/local_appliance_store.dart';
 import '../../data/repositories/appliance_repository_impl.dart';
 import '../../domain/entities/appliance.dart';
 import '../../domain/repositories/appliance_repository.dart';
@@ -14,7 +11,7 @@ import '../../domain/usecases/toggle_appliance.dart';
 import '../../domain/usecases/update_appliance.dart';
 
 final applianceRemoteDataSourceProvider = Provider<ApplianceRemoteDataSource>(
-  (ref) => ApplianceRemoteDataSource(ref.watch(dioClientProvider)),
+  (ref) => ApplianceRemoteDataSource(LocalApplianceStore()),
 );
 
 final applianceRepositoryProvider = Provider<ApplianceRepository>((ref) {
@@ -71,16 +68,12 @@ class ApplianceViewModel extends StateNotifier<ApplianceState> {
     required UpdateAppliance updateAppliance,
     required ToggleAppliance toggleAppliance,
     required DeleteAppliance deleteAppliance,
-    required Connectivity connectivity,
-    required DioClient dioClient,
-  })  : _repository = repository,
-        _addAppliance = addAppliance,
-        _updateAppliance = updateAppliance,
-        _toggleAppliance = toggleAppliance,
-        _deleteAppliance = deleteAppliance,
-        _connectivity = connectivity,
-        _dioClient = dioClient,
-        super(ApplianceState.initial()) {
+  }) : _repository = repository,
+       _addAppliance = addAppliance,
+       _updateAppliance = updateAppliance,
+       _toggleAppliance = toggleAppliance,
+       _deleteAppliance = deleteAppliance,
+       super(ApplianceState.initial()) {
     load();
   }
 
@@ -89,45 +82,31 @@ class ApplianceViewModel extends StateNotifier<ApplianceState> {
   final UpdateAppliance _updateAppliance;
   final ToggleAppliance _toggleAppliance;
   final DeleteAppliance _deleteAppliance;
-  final Connectivity _connectivity;
-  final DioClient _dioClient;
 
   Future<void> load() async {
     try {
-      final status = await _connectivity.checkConnectivity();
-      if (status == ConnectivityResult.none) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'پەیوەندی ئینتەرنێت نییە',
-        );
-        return;
-      }
       final items = await _repository.fetchAppliances();
       state = state.copyWith(items: items, isLoading: false, error: null);
-    } catch (e) {
-      final message = e is DioException
-          ? _dioClient.mapDioError(e)
-          : 'هێنانی ئامێرەکان سەرکەوتوو نەبوو';
-      state = state.copyWith(isLoading: false, error: message);
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load appliances.',
+      );
     }
   }
 
   Future<bool> toggle(String id) async {
     final previous = state.items;
     try {
-      final status = await _connectivity.checkConnectivity();
-      if (status == ConnectivityResult.none) {
-        state = state.copyWith(error: 'پەیوەندی ئینتەرنێت نییە');
-        return false;
-      }
       final updated = await _toggleAppliance(id);
       state = state.copyWith(items: updated, isLoading: false, error: null);
       return true;
-    } catch (e) {
-      final message = e is DioException
-          ? _dioClient.mapDioError(e)
-          : 'نوێکردنەوەی ئامێر سەرکەوتوو نەبوو';
-      state = state.copyWith(items: previous, isLoading: false, error: message);
+    } catch (_) {
+      state = state.copyWith(
+        items: previous,
+        isLoading: false,
+        error: 'Failed to update appliance state.',
+      );
       return false;
     }
   }
@@ -140,11 +119,6 @@ class ApplianceViewModel extends StateNotifier<ApplianceState> {
     bool isOn = true,
   }) async {
     try {
-      final status = await _connectivity.checkConnectivity();
-      if (status == ConnectivityResult.none) {
-        state = state.copyWith(error: 'پەیوەندی ئینتەرنێت نییە');
-        return false;
-      }
       final items = await _addAppliance(
         name: name,
         category: category,
@@ -154,11 +128,8 @@ class ApplianceViewModel extends StateNotifier<ApplianceState> {
       );
       state = state.copyWith(items: items, isLoading: false, error: null);
       return true;
-    } catch (e) {
-      final message = e is DioException
-          ? _dioClient.mapDioError(e)
-          : 'هەڵگرتنی ئامێر سەرکەوتوو نەبوو';
-      state = state.copyWith(error: message);
+    } catch (_) {
+      state = state.copyWith(error: 'Failed to add appliance.');
       return false;
     }
   }
@@ -166,19 +137,15 @@ class ApplianceViewModel extends StateNotifier<ApplianceState> {
   Future<bool> delete(String id) async {
     final previous = state.items;
     try {
-      final status = await _connectivity.checkConnectivity();
-      if (status == ConnectivityResult.none) {
-        state = state.copyWith(error: 'پەیوەندی ئینتەرنێت نییە');
-        return false;
-      }
       final items = await _deleteAppliance(id);
       state = state.copyWith(items: items, isLoading: false, error: null);
       return true;
-    } catch (e) {
-      final message = e is DioException
-          ? _dioClient.mapDioError(e)
-          : 'سڕینەوەی ئامێر سەرکەوتوو نەبوو';
-      state = state.copyWith(items: previous, isLoading: false, error: message);
+    } catch (_) {
+      state = state.copyWith(
+        items: previous,
+        isLoading: false,
+        error: 'Failed to delete appliance.',
+      );
       return false;
     }
   }
@@ -192,11 +159,6 @@ class ApplianceViewModel extends StateNotifier<ApplianceState> {
     required bool isOn,
   }) async {
     try {
-      final status = await _connectivity.checkConnectivity();
-      if (status == ConnectivityResult.none) {
-        state = state.copyWith(error: 'پەیوەندی ئینتەرنێت نییە');
-        return false;
-      }
       final items = await _updateAppliance(
         id: id,
         name: name,
@@ -207,11 +169,8 @@ class ApplianceViewModel extends StateNotifier<ApplianceState> {
       );
       state = state.copyWith(items: items, isLoading: false, error: null);
       return true;
-    } catch (e) {
-      final message = e is DioException
-          ? _dioClient.mapDioError(e)
-          : 'هەڵگرتنی ئامێر سەرکەوتوو نەبوو';
-      state = state.copyWith(error: message);
+    } catch (_) {
+      state = state.copyWith(error: 'Failed to update appliance.');
       return false;
     }
   }
@@ -221,13 +180,11 @@ class ApplianceViewModel extends StateNotifier<ApplianceState> {
 
 final appliancesProvider =
     StateNotifierProvider<ApplianceViewModel, ApplianceState>((ref) {
-  return ApplianceViewModel(
-    repository: ref.watch(applianceRepositoryProvider),
-    addAppliance: ref.watch(addApplianceUseCaseProvider),
-    updateAppliance: ref.watch(updateApplianceUseCaseProvider),
-    toggleAppliance: ref.watch(toggleApplianceUseCaseProvider),
-    deleteAppliance: ref.watch(deleteApplianceUseCaseProvider),
-    connectivity: ref.watch(connectivityProvider),
-    dioClient: ref.watch(dioClientProvider),
-  );
-});
+      return ApplianceViewModel(
+        repository: ref.watch(applianceRepositoryProvider),
+        addAppliance: ref.watch(addApplianceUseCaseProvider),
+        updateAppliance: ref.watch(updateApplianceUseCaseProvider),
+        toggleAppliance: ref.watch(toggleApplianceUseCaseProvider),
+        deleteAppliance: ref.watch(deleteApplianceUseCaseProvider),
+      );
+    });

@@ -1,33 +1,36 @@
-# Frontend API Setup
+# Frontend Local Data Mode
 
-This Flutter app talks to the Laravel backend in `backend/`.
+This Flutter app now runs in **local-only mode** and does not require the Laravel backend for normal use.
 
-## Configure API base URL
-1) Copy `.env.example` to `.env`:
-```
-cp .env.example .env
-```
-2) Set `API_BASE_URL`:
-- Default/local: `http://localhost:8000`
-- Android emulator: change to `http://10.0.2.2:8000`
-- Physical device on same LAN: `http://<your-machine-ip>:8000`
+## How data works
+- Appliance data is stored on the device using `SQLite` (`sqflite`).
+- Dashboard metrics/charts/costs are calculated in-app.
+- First launch seeds default appliances automatically.
 
 ## Run
-```
+```bash
 flutter pub get
 flutter run
 ```
-Ensure the backend is running (e.g. `php artisan serve --port=8000`).
 
-## Endpoints the app calls
-- `GET /api/dashboard?date=YYYY-MM-DD&mode=daily|monthly`
-- `GET /api/appliances`
-- `POST /api/appliances`
-- `PUT /api/appliances/{id}`
-- `DELETE /api/appliances/{id}`
-- `PATCH /api/appliances/{id}/toggle`
+## Notes
+- No host/domain/API is needed for Android publishing.
+- Data is per-device. If user clears app data or reinstalls, local data resets.
+- Existing local JSON data is auto-migrated to SQLite on first launch after update.
+- Existing backend folder is optional and no longer required by the mobile app.
+- Android requests notification permission at runtime on Android 13+.
+- A daily local reminder notification is scheduled (default: 20:00) after permission is granted.
+- You can set today's outage minutes from the dashboard; billing adjusts automatically.
+- Android hardening is enabled: backups disabled, cleartext traffic blocked, network security config enabled, and release minification/resource shrinking active.
 
-## Common issues
-- **CORS**: Backend CORS must allow your device host (backend config already set to `*`).
-- **Wrong host**: For Android emulator use `10.0.2.2`, not `localhost`.
-- **No internet**: The app shows "No internet connection" when offline and keeps the last loaded data.
+## Android Release (Play Store)
+1) Create an upload keystore:
+```bash
+keytool -genkeypair -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+2) Create `android/key.properties` from `android/key.properties.example`.
+3) Build release bundle:
+```bash
+flutter build appbundle --release
+```
+4) Upload `build/app/outputs/bundle/release/app-release.aab` to Google Play Console.
