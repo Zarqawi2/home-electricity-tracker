@@ -1,6 +1,6 @@
 # Home Electricity Consumption Tracker
 
-Flutter + Laravel app for tracking household electricity usage, estimating costs with progressive IQD tariffs, and managing appliances from a single dashboard.
+A local-first Flutter app with an optional Laravel backend for tracking household electricity usage, estimating costs with progressive IQD tariffs, and managing appliances.
 
 ![Flutter](https://img.shields.io/badge/Flutter-UI-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-Language-0175C2?logo=dart&logoColor=white)
@@ -9,46 +9,61 @@ Flutter + Laravel app for tracking household electricity usage, estimating costs
 ![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?logo=mysql&logoColor=white)
 
 ## Highlights
+
+- Responsive light UI with Overview, Appliances, Records, and Tools navigation
 - Daily and monthly consumption metrics with cost estimates
 - Appliance management (add, edit, delete, toggle)
 - Line chart trends and appliance breakdown pie chart
+- Energy and electrical calculators, saved meter readings, and outage records
 - Connectivity-aware actions with status feedback
+- Daily local reminder notifications
+- Outage-aware billing (set outage minutes and auto-adjust cost/kWh)
 - RTL-first UI with Kurdish (ckb) and English support
+- Local-only mode available for Android publishing without hosting/domain
 
 ## Screenshots
+
+Captured from the current Flutter web app using illustrative sample data at desktop (1440 × 1000) and mobile (390 × 844) viewport sizes.
+
 <table>
   <tr>
     <td align="center">
-      <img src="screenshots/dashboard-overview.png" width="240" alt="Dashboard overview" />
-      <br/>Dashboard overview
+      <img src="screenshots/dashboard-overview.png" width="460" alt="Desktop overview with household consumption and cost estimates" />
+      <br/>Overview — consumption and cost estimates
     </td>
     <td align="center">
-      <img src="screenshots/appliances-grid.png" width="240" alt="Appliances grid" />
-      <br/>Appliances grid
-    </td>
-    <td align="center">
-      <img src="screenshots/add-appliance-dialog.png" width="240" alt="Add appliance dialog" />
-      <br/>Add appliance dialog
+      <img src="screenshots/appliances-grid.png" width="460" alt="Desktop appliance management with usage settings" />
+      <br/>Appliances — household devices and usage
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="screenshots/delete-appliance-confirmation.png" width="240" alt="Delete appliance confirmation" />
-      <br/>Delete appliance confirmation
+      <img src="screenshots/records.png" width="460" alt="Desktop records section with meter readings and outage history access" />
+      <br/>Records — meter readings and outage history
     </td>
     <td align="center">
-      <img src="screenshots/offline-snackbar.png" width="240" alt="Offline error snackbar" />
-      <br/>Offline error snackbar
-    </td>
-    <td align="center">
-      <img src="screenshots/mobile-dashboard.png" width="240" alt="Mobile dashboard" />
-      <br/>Mobile dashboard
+      <img src="screenshots/tools.png" width="460" alt="Desktop tools section with calculators, monthly budget, and outage tracking" />
+      <br/>Tools — calculators, budget, and outage tracking
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="screenshots/mobile-appliances.png" width="240" alt="Mobile appliances list" />
-      <br/>Mobile appliances list
+      <img src="screenshots/energy-calculator.png" width="460" alt="Desktop energy calculator for electricity usage and cost estimates" />
+      <br/>Energy and cost calculator
+    </td>
+    <td align="center">
+      <img src="screenshots/add-appliance-dialog.png" width="460" alt="Desktop dialog for adding an appliance and its usage details" />
+      <br/>Add an appliance
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="screenshots/mobile-dashboard.png" width="240" alt="Flutter web overview at a mobile viewport size" />
+      <br/>Mobile web overview
+    </td>
+    <td align="center">
+      <img src="screenshots/mobile-appliances.png" width="240" alt="Flutter web appliance management at a mobile viewport size" />
+      <br/>Mobile web appliances
     </td>
   </tr>
 </table>
@@ -57,7 +72,7 @@ Flutter + Laravel app for tracking household electricity usage, estimating costs
 **Frontend**
 - Flutter, Dart
 - Riverpod (state), GoRouter (navigation)
-- Dio (HTTP), fl_chart (charts)
+- SQLite (sqflite local persistence), fl_chart (charts)
 
 **Backend**
 - Laravel 12 REST API
@@ -103,12 +118,12 @@ php artisan serve --port=8000
 cd frontend
 flutter pub get
 ```
-2) If running on a physical device, set the API base URL in:
-`frontend/lib/core/config/app_config.dart`
-3) Run the app:
+2) Run the app:
 ```
 flutter run
 ```
+
+This app can run fully local on device (no API host/domain required). Backend setup is optional.
 
 ## Tariff Logic (IQD per kWh)
 - 1-400: 72
