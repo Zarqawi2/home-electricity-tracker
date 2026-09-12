@@ -1,12 +1,10 @@
 # Home Electricity Consumption Tracker
 
-A local-first Flutter app with an optional Laravel backend for tracking household electricity usage, estimating costs with progressive IQD tariffs, and managing appliances.
+A standalone Flutter app for tracking household electricity usage, estimating costs with progressive IQD tariffs, and managing appliances. Data and calculations stay on the device; no server, API, or database hosting is required.
 
 ![Flutter](https://img.shields.io/badge/Flutter-UI-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-Language-0175C2?logo=dart&logoColor=white)
-![Laravel](https://img.shields.io/badge/Laravel-API-FF2D20?logo=laravel&logoColor=white)
-![PHP](https://img.shields.io/badge/PHP-Backend-777BB4?logo=php&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?logo=mysql&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-Local_storage-003B57?logo=sqlite&logoColor=white)
 
 ## Highlights
 
@@ -15,11 +13,11 @@ A local-first Flutter app with an optional Laravel backend for tracking househol
 - Appliance management (add, edit, delete, toggle)
 - Line chart trends and appliance breakdown pie chart
 - Energy and electrical calculators, saved meter readings, and outage records
-- Connectivity-aware actions with status feedback
+- Local storage for household profiles, appliances, budgets, and records
 - Daily local reminder notifications
 - Outage-aware billing (set outage minutes and auto-adjust cost/kWh)
 - RTL-first UI with Kurdish (ckb) and English support
-- Local-only mode available for Android publishing without hosting/domain
+- Runs locally without a server or domain
 
 ## Screenshots
 
@@ -69,68 +67,43 @@ Captured from the current Flutter web app using illustrative sample data at desk
 </table>
 
 ## Tech Stack
-**Frontend**
+
 - Flutter, Dart
 - Riverpod (state), GoRouter (navigation)
-- SQLite (sqflite local persistence), fl_chart (charts)
-
-**Backend**
-- Laravel 12 REST API
-- MySQL
+- SQLite (`sqflite`) for appliance and outage data on Android, iOS, and macOS
+- Shared preferences for settings and local storage on web, Windows, and Linux
+- fl_chart for consumption estimates and appliance breakdowns
 
 ## Project Structure
-- `backend/` Laravel API
-- `frontend/` Flutter app
+
+- `frontend/` standalone Flutter app
 - `screenshots/` README assets
 
 ## Getting Started
 
-### Backend (Laravel)
-1) Copy `.env.example` to `.env` and set MySQL credentials:
-```
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=home_electricity
-DB_USERNAME=your_user
-DB_PASSWORD=your_pass
-```
-2) Install dependencies:
-```
-composer install
-```
-3) Generate app key (if not set):
-```
-php artisan key:generate
-```
-4) Migrate & seed (tariff tiers, default appliances, 30 days usage logs):
-```
-php artisan migrate:fresh --seed
-```
-5) Run the API:
-```
-php artisan serve --port=8000
-```
+Install Flutter, then run:
 
-### Frontend (Flutter)
-1) Install packages:
-```
+```bash
 cd frontend
 flutter pub get
-```
-2) Run the app:
-```
 flutter run
 ```
 
-This app can run fully local on device (no API host/domain required). Backend setup is optional.
+No `.env` file or server setup is needed. See [Local data and release builds](frontend/README_LOCAL_DATA.md) for storage details and Android release instructions.
+
+## Checks
+
+From `frontend/`:
+
+```bash
+flutter analyze
+flutter test
+```
 
 ## Tariff Logic (IQD per kWh)
+
 - 1-400: 72
 - 401-800: 108
 - 801-1200: 175
 - 1201-1600: 265
 - 1601+: 350
-
-## API Reference
-See `backend/README.md` for full endpoint details and sample requests.

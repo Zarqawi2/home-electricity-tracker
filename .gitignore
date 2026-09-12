@@ -1,0 +1,2 @@
+# Retired server: keep local credentials, databases, and caches out of Git.
+/backend/
